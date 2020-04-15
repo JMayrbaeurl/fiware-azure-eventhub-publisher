@@ -1,0 +1,83 @@
+GET http://localhost:1026/v2/entities
+
+###
+
+POST http://localhost:1026/v2/entities HTTP/1.1
+Content-Type: application/json
+
+{
+      "id":"urn:ngsi-ld:Product:010", "type":"Product",
+      "name":{"type":"Text", "value":"Lemonade"},
+      "size":{"type":"Text", "value": "S"},
+      "price":{"type":"Integer", "value": 99}
+}
+
+###
+
+GET http://localhost:1026/v2/subscriptions
+
+###
+
+POST http://localhost:1026/v2/subscriptions HTTP/1.1
+Content-Type: application/json
+
+{
+  "description": "Notify me of all product price changes",
+  "subject": {
+    "entities": [{"idPattern": ".*", "type": "Product"}],
+    "condition": {
+      "attrs": [ "price" ]
+    }
+  },
+  "notification": {
+    "http": {
+      "url": "http://tutorial:3000/subscription/price-change"
+    }
+  }
+}
+
+###
+
+POST http://localhost:1026/v2/subscriptions HTTP/1.1
+Content-Type: application/json
+
+{
+  "description": "Notify me of all product price changes",
+  "subject": {
+    "entities": [{"idPattern": ".*", "type": "Product"}]
+  },
+  "notification": {
+    "http": {
+      "url": "http://tutorial:3000/subscription/products"
+    }
+  }
+}
+
+###
+
+POST http://localhost:1026/v2/subscriptions HTTP/1.1
+Content-Type: application/json
+
+{
+  "description": "Notify me of all changes",
+  "subject": {
+    "entities": [{"idPattern": ".*", "typePattern": ".*"}]
+  },
+  "notification": {
+    "http": {
+      "url": "http://host.docker.internal:8080/subscription/all"
+    }
+  }
+}
+
+###
+DELETE http://localhost:1026/v2/subscriptions/5e971564bb58e5e492e5204c HTTP/1.1
+
+###
+
+POST http://localhost:8080/subscription/all
+Content-Type: application/json
+
+{
+  "message" : "hi"
+}

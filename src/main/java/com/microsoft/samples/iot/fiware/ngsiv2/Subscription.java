@@ -17,6 +17,10 @@ public class Subscription {
 
     private Notification notification;
 
+    public boolean isForAnyType() {
+        return this.subject.isForAnyType();
+    }
+
     public String getDescription() {
         return description;
     }

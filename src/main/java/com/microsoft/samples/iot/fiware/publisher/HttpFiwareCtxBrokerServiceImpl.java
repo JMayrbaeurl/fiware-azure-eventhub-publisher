@@ -2,6 +2,7 @@ package com.microsoft.samples.iot.fiware.publisher;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.microsoft.samples.iot.fiware.ngsiv2.ContextBrokerException;
 import com.microsoft.samples.iot.fiware.ngsiv2.Subscription;
@@ -28,7 +29,7 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
 
     private static final String SUBSCRIPTIONS_PATH = "subscriptions";
 
-    @Value("${fiware.publisher.notificationurl:http://localhost:8080/subscription/}")
+    @Value("${fiware.publisher.notificationurl:http://localhost:8080/notification/}")
     private String notificationURL;
 
     @Autowired
@@ -64,7 +65,7 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
 
     @Override
     public String subscribeToAllChanges() {
-       
+
         logger.debug("Sending subscription request to FiWare Context broker for all changes");
 
         return this.subscribeToEntityWithType(null, null);
@@ -74,8 +75,31 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
     public List<Subscription> queryForSubscriptions() {
 
         logger.debug("Querying for existing subscriptions");
+        List<Subscription> result = this.doQueryForSubscriptions(-1, -1);
+        logger.debug("Found " + (result != null ? result.size() : 0) + " existing subscriptions");
 
-        RequestHeadersSpec<?> request = this.webClient.get().uri(SUBSCRIPTIONS_PATH);
+        return result;
+    }
+
+    @Override
+    public List<Subscription> queryForSubscriptions(int limit, int offset) {
+
+        logger.debug("Querying for existing subscriptions with limit " + limit + " and offset " + offset);
+        List<Subscription> result = this.doQueryForSubscriptions(limit, offset);
+        logger.debug("Found " + (result != null ? result.size() : 0) + " existing subscriptions");
+
+        return result;
+    }
+
+    protected List<Subscription> doQueryForSubscriptions(int limit, int offset) {
+
+        RequestHeadersSpec<?> request = null;
+        if (limit > 0 || offset > 0) {
+            request = this.webClient.get().uri(uriBuilder -> uriBuilder.path(SUBSCRIPTIONS_PATH)
+                    .queryParam("limit", limit).queryParam("offset", offset).build());
+        } else
+            request = this.webClient.get().uri(SUBSCRIPTIONS_PATH);
+
         Subscription[] response = null;
 
         try {
@@ -85,15 +109,56 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
             throw ex;
         }
 
-        logger.debug("Found " + response.length + " existing subscriptions");
-
         return Arrays.asList(response);
+    }
+
+    @Override
+    public boolean hasSubscriptionForAnyType() {
+
+        boolean result = false;
+
+        SubscriptionIterator iter = new SubscriptionIterator(this, 10);
+        while (iter.hasNext()) {
+            if (iter.next().isForAnyType()) {
+                return true;
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public boolean hasSubscriptionForAnyType(Predicate<Subscription> filter) {
+
+        boolean result = false;
+
+        if (filter == null)
+            return this.hasSubscriptionForAnyType();
+        else {
+            SubscriptionIterator iter = new SubscriptionIterator(this, 10);
+            while (iter.hasNext()) {
+                Subscription subscription = iter.next();
+                if (subscription.isForAnyType() && filter.test(subscription)) {
+                    return true;
+                }
+            }
+        }
+        return result;
+    }
+
+    
+    @Override
+    public boolean hasSubscriptionForAllChanges() {
+        
+        return this.hasSubscriptionForAnyType(
+            sub -> sub.getNotification() != null && sub.getNotification().getHttp() != null && 
+                    ( this.notificationURL + ALL_PATHEXT).equals(sub.getNotification().getHttp().get("url")));
     }
 
     private Subscription createSubscriptionRequestObject(final String entityName, final String attrName) {
 
         Subscription result = this.subFactory.create(entityName, attrName,
-                this.notificationURL + (entityName != null ? entityName.toLowerCase() : "all"));
+                this.notificationURL + (entityName != null ? entityName.toLowerCase() : ALL_PATHEXT));
         result.setDescription("description");
         return result;
     }
@@ -113,4 +178,5 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
     public void setWebClient(WebClient webClient) {
         this.webClient = webClient;
     }
+
 }

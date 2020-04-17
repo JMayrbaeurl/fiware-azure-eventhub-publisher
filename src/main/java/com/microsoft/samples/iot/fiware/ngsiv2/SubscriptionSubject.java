@@ -13,9 +13,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubscriptionSubject {
 
+    private static final String TYPE_PATTERN = "typePattern";
+
+    public static final String PLACEHOLDER_VALUE = ".*";
+
     private List<Map<String,Object>> entities;
 
     private Map<String, List<String>> condition;
+
+    /**
+     * 
+     * @return true if this subject is for any type
+     */
+    public boolean isForAnyType() {
+
+        boolean result = false;
+
+        if (this.entities != null && this.entities.size() == 1) {
+            result = this.entities.get(0).containsKey(TYPE_PATTERN) 
+                && PLACEHOLDER_VALUE.equals(this.entities.get(0).get(TYPE_PATTERN));
+        }
+
+        return result;
+    }
 
     public List<Map<String, Object>> getEntities() {
         return entities;
@@ -37,16 +57,16 @@ public class SubscriptionSubject {
         this.entities = new ArrayList<Map<String,Object>>();
     }
 
-    public static SubscriptionSubject create(final String entityName, final String attributeName ) {
+    public static SubscriptionSubject create(final String entityType, final String attributeName ) {
 
         SubscriptionSubject subject = new SubscriptionSubject();
 
         Map<String, Object> anEntry = new HashMap<String, Object>();
-        anEntry.put("idPattern", ".*"); 
-        if (entityName != null)
-            anEntry.put("type", entityName);
+        anEntry.put("idPattern", PLACEHOLDER_VALUE); 
+        if (entityType != null)
+            anEntry.put("type", entityType);
         else
-        anEntry.put("typePattern", ".*");
+            anEntry.put(TYPE_PATTERN, PLACEHOLDER_VALUE);
         subject.entities.add(anEntry);
 
         if (attributeName != null) {

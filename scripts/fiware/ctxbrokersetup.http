@@ -31,7 +31,7 @@ Content-Type: application/json
   },
   "notification": {
     "http": {
-      "url": "http://tutorial:3000/subscription/price-change"
+      "url": "http://tutorial:3000/notification/price-change"
     }
   }
 }
@@ -65,19 +65,27 @@ Content-Type: application/json
   },
   "notification": {
     "http": {
-      "url": "http://host.docker.internal:8080/subscription/all"
+      "url": "http://localhost:8080/notification/all"
     }
   }
 }
 
 ###
-DELETE http://localhost:1026/v2/subscriptions/5e971564bb58e5e492e5204c HTTP/1.1
+DELETE http://localhost:1026/v2/subscriptions/5e99c70dbb58e5e492e52053 HTTP/1.1
 
 ###
 
-POST http://localhost:8080/subscription/all
+POST http://localhost:8080/notification/all
 Content-Type: application/json
 
 {
   "message" : "hi"
 }
+
+###
+
+GET http://localhost:8080/subscriptions
+
+###
+
+POST http://localhost:8080/subscription/Product

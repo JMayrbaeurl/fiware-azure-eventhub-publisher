@@ -1,0 +1,28 @@
+{
+    "subscriptionId": "12345",
+    "data": [
+      {
+        "id": "Room1",
+        "type": "Room",
+        "temperature": {
+          "value": 23,
+          "type": "Number",
+          "metadata": {}
+        },
+        "humidity": {
+          "value": 70,
+          "type": "percentage",
+          "metadata": {}
+        }
+      },
+      {
+        "id": "Room2",
+        "type": "Room",
+        "temperature": {
+          "value": 24,
+          "type": "Number",
+          "metadata": {}
+        }
+      }
+    ]
+  }

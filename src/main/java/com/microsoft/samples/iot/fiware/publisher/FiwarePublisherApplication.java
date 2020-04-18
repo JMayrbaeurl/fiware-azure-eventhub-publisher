@@ -46,4 +46,13 @@ public class FiwarePublisherApplication {
 			
 		return producer;
 	}
+
+	@Bean
+	public Publisher createPublisher(EventHubProducerClient producer) {
+
+		EventHubPublisher aPublisher = new EventHubPublisher();
+		aPublisher.setEventHubClient(producer);
+
+		return aPublisher;
+	}
 }

@@ -24,7 +24,7 @@ public class NotificationController {
     @Autowired
     private Publisher publisher;
 
-    @PostMapping("notification/{entityName}")
+    @PostMapping("notification/{entityType}")
     public void publishNotification(@PathVariable String entityType, @RequestBody String jsonString) {
 
         logger.info("Received notification for entity type " + entityType + " and message '" + jsonString + "'");

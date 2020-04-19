@@ -19,4 +19,6 @@ public interface FiwareCtxBrokerService {
     public boolean hasSubscriptionForAnyType();
     public boolean hasSubscriptionForAnyType(Predicate<Subscription> filter);
     public boolean hasSubscriptionForAllChanges();
+
+    public boolean subscribeToAllChangesIfNotAlready();
 }

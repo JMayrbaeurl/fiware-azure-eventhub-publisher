@@ -25,14 +25,20 @@ public class EventHubPublisher implements Publisher {
 
     @Override
     public void publishNotificationForEntityChange(@NonNull final String message) {
-        // TODO Auto-generated method stub
+        
+        logger.info(
+                "Subscription notification called for any entity type and message '" + message + "'");
 
+        this.doPublishNotificationForEntityChange("Any", message);
     }
 
     @Override
     public void publishNotificationForEntityChange(@NonNull final NotificationMessage message) {
-        // TODO Auto-generated method stub
+        
+        logger.info(
+            "Subscription notification called for any entity type and message '" + message + "'");
 
+        this.doPublishNotificationForEntityChange("Any", message);
     }
 
     @Override
@@ -40,6 +46,11 @@ public class EventHubPublisher implements Publisher {
 
         logger.info(
                 "Subscription notification called for entity type " + entityType + " and message '" + message + "'");
+
+        this.doPublishNotificationForEntityChange(entityType, message);
+    }
+
+    protected void doPublishNotificationForEntityChange(final String entityType, @NonNull final String message) {
 
         EventDataBatch batch = this.doCreateBatch();
         try {
@@ -65,6 +76,12 @@ public class EventHubPublisher implements Publisher {
 
         logger.info(
                 "Subscription notification called for entity type " + entityType + " and message '" + message + "'");
+
+        this.doPublishNotificationForEntityChange(entityType, message);
+    }
+
+    protected void doPublishNotificationForEntityChange(final String entityType,
+            @NonNull final NotificationMessage message) {
 
         if (message.getData() != null && message.getData().size() > 0) {
             EventDataBatch batch = this.doCreateBatch();

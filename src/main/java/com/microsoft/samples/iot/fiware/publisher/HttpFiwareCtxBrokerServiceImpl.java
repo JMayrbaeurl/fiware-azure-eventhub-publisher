@@ -146,20 +146,36 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
         return result;
     }
 
-    
     @Override
     public boolean hasSubscriptionForAllChanges() {
-        
+
         return this.hasSubscriptionForAnyType(
-            sub -> sub.getNotification() != null && sub.getNotification().getHttp() != null && 
-                    ( this.notificationURL + ALL_PATHEXT).equals(sub.getNotification().getHttp().get("url")));
+                sub -> sub.getNotification() != null && sub.getNotification().getHttp() != null
+                        && (this.notificationURL + ALL_PATHEXT).equals(sub.getNotification().getHttp().get("url")));
+    }
+
+    /**
+     * Returns true if subscription was already done
+     */
+    @Override
+    public boolean subscribeToAllChangesIfNotAlready() {
+        
+        logger.info("Adding subscription for all changes");
+
+        boolean result = this.hasSubscriptionForAllChanges();
+        if (!result) 
+            this.subscribeToAllChanges();
+        else
+            logger.info("Subscription for all changes was already available");
+        
+        return result;
     }
 
     private Subscription createSubscriptionRequestObject(final String entityName, final String attrName) {
 
         Subscription result = this.subFactory.create(entityName, attrName,
                 this.notificationURL + (entityName != null ? entityName.toLowerCase() : ALL_PATHEXT));
-        result.setDescription("description");
+        result.setDescription("Subscription for publishing changes to Azure services");
         return result;
     }
 

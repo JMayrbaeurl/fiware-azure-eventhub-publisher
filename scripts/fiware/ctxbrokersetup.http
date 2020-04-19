@@ -14,6 +14,17 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:1026/v2/entities/urn:ngsi-ld:Product:010/attrs?type=Product
+Content-Type: application/json
+
+{
+  "price": {
+    "value": 97
+  }
+}
+
+###
+
 GET http://localhost:1026/v2/subscriptions
 
 ###
@@ -71,7 +82,7 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:1026/v2/subscriptions/5e99c70dbb58e5e492e52053 HTTP/1.1
+DELETE http://localhost:1026/v2/subscriptions/5e9c68ecbb58e5e492e52059 HTTP/1.1
 
 ###
 

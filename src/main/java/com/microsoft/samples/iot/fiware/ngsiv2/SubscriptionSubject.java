@@ -13,10 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubscriptionSubject {
 
-    private static final String TYPE_PATTERN = "typePattern";
-
-    public static final String PLACEHOLDER_VALUE = ".*";
-
     private List<Map<String,Object>> entities;
 
     private Map<String, List<String>> condition;
@@ -30,8 +26,8 @@ public class SubscriptionSubject {
         boolean result = false;
 
         if (this.entities != null && this.entities.size() == 1) {
-            result = this.entities.get(0).containsKey(TYPE_PATTERN) 
-                && PLACEHOLDER_VALUE.equals(this.entities.get(0).get(TYPE_PATTERN));
+            result = this.entities.get(0).containsKey(EntityIdentification.TYPE_PATTERN) 
+                && EntityIdentification.PLACEHOLDER_VALUE.equals(this.entities.get(0).get(EntityIdentification.TYPE_PATTERN));
         }
 
         return result;
@@ -62,11 +58,11 @@ public class SubscriptionSubject {
         SubscriptionSubject subject = new SubscriptionSubject();
 
         Map<String, Object> anEntry = new HashMap<String, Object>();
-        anEntry.put("idPattern", PLACEHOLDER_VALUE); 
+        anEntry.put("idPattern", EntityIdentification.PLACEHOLDER_VALUE); 
         if (entityType != null)
             anEntry.put("type", entityType);
         else
-            anEntry.put(TYPE_PATTERN, PLACEHOLDER_VALUE);
+            anEntry.put(EntityIdentification.TYPE_PATTERN, EntityIdentification.PLACEHOLDER_VALUE);
         subject.entities.add(anEntry);
 
         if (attributeName != null) {
@@ -77,5 +73,36 @@ public class SubscriptionSubject {
         }
 
         return subject;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((condition == null) ? 0 : condition.hashCode());
+        result = prime * result + ((entities == null) ? 0 : entities.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SubscriptionSubject other = (SubscriptionSubject) obj;
+        if (condition == null) {
+            if (other.condition != null)
+                return false;
+        } else if (!condition.equals(other.condition))
+            return false;
+        if (entities == null) {
+            if (other.entities != null)
+                return false;
+        } else if (!entities.equals(other.entities))
+            return false;
+        return true;
     }
 }

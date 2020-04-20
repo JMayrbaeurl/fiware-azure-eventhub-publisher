@@ -1,6 +1,8 @@
 package com.microsoft.samples.iot.fiware.publisher;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -19,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Service
 public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
@@ -48,8 +50,99 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
         if (entityName != null)
             logger.debug("Sending subscription request to FiWare Context broker for " + entityName);
 
+        return this.doSubscribeToEntityWithType(entityName, attrName);
+    }
+
+    @Override
+    public String subscribeToAllChanges() {
+
+        logger.debug("Sending subscription request to FiWare Context broker for all changes");
+
+        return this.subscribeToEntityWithType(null, null);
+    }
+
+    @Override
+    public String createSubscription(@NonNull final Subscription subscription) {
+
+        logger.debug("Sending subscription request to FiWare Context broker");
+
+        return this.doSubscribeTo(subscription);
+    }
+
+    @Override
+    public void createSubscriptions(@NonNull final Subscription[] subscriptions) {
+        
+        this.doCreateSubscriptions(subscriptions, false);
+    }
+
+    @Override
+    public void createSubscriptionsIfNotExist(@NonNull final Subscription[] subscriptions) {
+
+        throw new IllegalStateException("Not fully implemented yet");
+
+        // this.doCreateSubscriptions(subscriptions, true);
+    }
+
+    public void doCreateSubscriptions(@NonNull final Subscription[] subscriptions, boolean onlyIfNotExist) {
+        
+        if (subscriptions.length > 0) {
+
+            List<Subscription> nonExistingSubscriptions = Arrays.asList(subscriptions);
+
+            if (onlyIfNotExist) {
+                Iterator<Subscription> iter = new SubscriptionIterator(this, 25);
+                while(iter.hasNext()) {
+                    Subscription existingSubscription = iter.next();
+                    int index = this.isSubscriptionInSet(existingSubscription, nonExistingSubscriptions);
+                    if (index != -1)
+                        nonExistingSubscriptions.remove(index);
+                    if (nonExistingSubscriptions.size() == 0)
+                        break;
+                }
+            }
+
+            for(Subscription newSub : nonExistingSubscriptions) {
+                this.createSubscription(newSub);
+            }
+        }
+    }
+
+    private int isSubscriptionInSet(Subscription subscription, List<Subscription> set) {
+
+        int result = -1;
+
+        for(int i = 0; i < set.size(); i++) {
+            Subscription subInSet = set.get(i);
+            if (this.isForSameChange(subscription, subInSet)) {
+                result = i;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    private boolean isForSameChange(Subscription subscription1, Subscription subscription2) {
+
+        if (subscription1.getId() != null && subscription2.getId() != null) {
+            if (subscription1.getId().equals(subscription2.getId()))
+                return true;
+        }
+
+        return subscription1.isForSameChange(subscription2);
+    }
+
+    protected String doSubscribeToEntityWithType(@NonNull final String entityName, final String attrName) {
+
+        Subscription newSubscription = this.createSubscriptionRequestObject(entityName, attrName);
+
+        return this.doSubscribeTo(newSubscription);
+    }
+
+    protected String doSubscribeTo(@NonNull final Subscription subscription) {
+
         RequestHeadersSpec<?> request = this.webClient.post().uri(SUBSCRIPTIONS_PATH).accept(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(this.createSubscriptionRequestObject(entityName, attrName)));
+                .body(BodyInserters.fromValue(subscription));
         ClientResponse response = request.exchange().block();
 
         logger.debug("Subscription request with status code " + response.statusCode().name());
@@ -64,19 +157,21 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
     }
 
     @Override
-    public String subscribeToAllChanges() {
-
-        logger.debug("Sending subscription request to FiWare Context broker for all changes");
-
-        return this.subscribeToEntityWithType(null, null);
-    }
-
-    @Override
     public List<Subscription> queryForSubscriptions() {
 
         logger.debug("Querying for existing subscriptions");
         List<Subscription> result = this.doQueryForSubscriptions(-1, -1);
         logger.debug("Found " + (result != null ? result.size() : 0) + " existing subscriptions");
+
+        return result;
+    }
+
+    @Override
+    public List<Subscription> queryForOwnSubscriptions() {
+       
+        logger.debug("Querying for own subscriptions");
+        List<Subscription> result = this.doQueryForSubscriptions(-1, -1, this.ownFilter());
+        logger.debug("Found " + (result != null ? result.size() : 0) + " own subscriptions");
 
         return result;
     }
@@ -92,6 +187,11 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
     }
 
     protected List<Subscription> doQueryForSubscriptions(int limit, int offset) {
+
+        return this.doQueryForSubscriptions(limit, offset, null);
+    }
+
+    protected List<Subscription> doQueryForSubscriptions(int limit, int offset, Predicate<Subscription> filter) {
 
         RequestHeadersSpec<?> request = null;
         if (limit > 0 || offset > 0) {
@@ -109,7 +209,15 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
             throw ex;
         }
 
-        return Arrays.asList(response);
+        if (filter != null) {
+            List<Subscription> result = new ArrayList<Subscription>();
+            for(Subscription sub : response) {
+                if (filter.test(sub))
+                    result.add(sub);
+            }
+            return result;
+        } else
+            return Arrays.asList(response);
     }
 
     @Override
@@ -149,9 +257,13 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
     @Override
     public boolean hasSubscriptionForAllChanges() {
 
-        return this.hasSubscriptionForAnyType(
-                sub -> sub.getNotification() != null && sub.getNotification().getHttp() != null
-                        && (this.notificationURL + ALL_PATHEXT).equals(sub.getNotification().getHttp().get("url")));
+        return this.hasSubscriptionForAnyType(this.ownFilter());
+    }
+
+    private Predicate<Subscription> ownFilter() {
+
+        return sub -> sub.getNotification() != null && sub.getNotification().getHttp() != null
+            && (this.notificationURL + ALL_PATHEXT).equals(sub.getNotification().getHttp().get("url"));
     }
 
     /**
@@ -159,15 +271,15 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
      */
     @Override
     public boolean subscribeToAllChangesIfNotAlready() {
-        
+
         logger.info("Adding subscription for all changes");
 
         boolean result = this.hasSubscriptionForAllChanges();
-        if (!result) 
+        if (!result)
             this.subscribeToAllChanges();
         else
             logger.info("Subscription for all changes was already available");
-        
+
         return result;
     }
 

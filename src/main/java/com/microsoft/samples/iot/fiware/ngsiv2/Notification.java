@@ -9,11 +9,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Notification {
 
+    public enum AttributesFormat { normalized, keyValues, values };
+
+    public static final AttributesFormat DEFAULT_ATTRIBUTES_FORMAT = AttributesFormat.keyValues;
+
     private Integer timesSent;
     private Date lastNotification;
     private List<String> attrs;
     private Boolean onlyChangedAttrs;
-    private String attrsFormat;
+    private String attrsFormat = DEFAULT_ATTRIBUTES_FORMAT.name();
     private Map<String, String> http;
     private Date lastFailure;
     private String lastFailureReason;

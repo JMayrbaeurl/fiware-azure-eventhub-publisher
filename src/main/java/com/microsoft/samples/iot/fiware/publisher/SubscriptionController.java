@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -24,8 +26,8 @@ public class SubscriptionController {
     @Autowired
     private FiwareCtxBrokerService ctxBrokerService;
 
-    @PostMapping("subscription/{entityType}")
-    public Map<String, Object> publishNotification(@NonNull @PathVariable String entityType) {
+    @PostMapping("subscriptions/{entityType}")
+    public Map<String, Object> subscribeToAllEntitiesOfType(@NonNull @PathVariable String entityType) {
 
         logger.info("Adding subscription for all entites of type ' " + entityType + "'");
 
@@ -36,10 +38,25 @@ public class SubscriptionController {
         return result;
     }
 
-    @GetMapping("subscriptions")
-    public List<Subscription> getAllSubscriptions() {
+    @PostMapping("subscriptions")
+    public Map<String, Object> createSubscription(@NonNull @RequestBody Subscription subscription) {
 
-        return this.ctxBrokerService.queryForSubscriptions();
+        logger.info("Adding subscription with description '" + subscription.getDescription() + "'");
+
+        String subID = this.ctxBrokerService.createSubscription(subscription);
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("Subscription ID", subID);
+
+        return result;
+    }
+
+    @GetMapping("subscriptions")
+    public List<Subscription> getAllSubscriptions(@RequestParam(required = false) Boolean onlyOwn) {
+
+        if (onlyOwn == null | onlyOwn == Boolean.FALSE)
+            return this.ctxBrokerService.queryForSubscriptions();
+        else
+            return this.ctxBrokerService.queryForOwnSubscriptions();
     }
     
 }

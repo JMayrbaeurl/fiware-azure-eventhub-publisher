@@ -13,8 +13,13 @@ public interface FiwareCtxBrokerService {
     public String subscribeToEntityWithType(String entityTypeName);
     public String subscribeToEntityWithType(String entityTypeName, String attrName);
 
+    public String createSubscription(Subscription subscription);
+    public void createSubscriptions(Subscription[] subscriptions);
+    public void createSubscriptionsIfNotExist(Subscription[] subscriptions);
+
     public List<Subscription> queryForSubscriptions();
     public List<Subscription> queryForSubscriptions(int limit, int offset);
+    public List<Subscription> queryForOwnSubscriptions();
 
     public boolean hasSubscriptionForAnyType();
     public boolean hasSubscriptionForAnyType(Predicate<Subscription> filter);

@@ -153,7 +153,9 @@ public class HttpFiwareCtxBrokerServiceImpl implements FiwareCtxBrokerService {
             throw new ContextBrokerException(errMsg);
         }
 
-        return response.headers().header("Location").get(0);
+        // Ctx Broker response in header looks like: Location: /v2/subscriptions/5e9ea1abbb58e5e492e52064
+        String[] locationParts = response.headers().header("Location").get(0).split("/");
+        return locationParts.length == 4 ? locationParts[3] : "";
     }
 
     @Override

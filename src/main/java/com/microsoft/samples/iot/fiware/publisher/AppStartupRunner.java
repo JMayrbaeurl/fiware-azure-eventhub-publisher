@@ -29,7 +29,7 @@ public class AppStartupRunner implements ApplicationRunner {
     @Value("${fiware.publisher.subscriptions.configFilePath:}")
     private String configFilePath;
 
-    @Value("${fiware.publisher.subscriptions.all:true}")
+    @Value("${fiware.publisher.subscriptions.all:false}")
     private boolean subscribeToAllChanges;
 
     @Autowired

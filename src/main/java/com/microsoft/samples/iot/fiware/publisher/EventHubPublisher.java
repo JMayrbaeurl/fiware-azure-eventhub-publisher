@@ -23,6 +23,11 @@ public class EventHubPublisher implements Publisher {
     @Autowired
     private EventHubProducerClient eventHubClient;
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    public EventHubPublisher() {
+    }
+
     @Override
     public void publishNotificationForEntityChange(@NonNull final String message) {
         
@@ -59,10 +64,9 @@ public class EventHubPublisher implements Publisher {
         } catch (AmqpException ex) {
             logger.error(
                     "Notification message is too large to be sent in one batch. Splitting it into multiple events");
-            ObjectMapper objectMapper = new ObjectMapper();
             try {
                 this.publishNotificationForEntityChange(entityType,
-                        objectMapper.readValue(message, NotificationMessage.class));
+                        this.objectMapper.readValue(message, NotificationMessage.class));
             } catch (JsonProcessingException e) {
                 logger.error("Exception reading Json notification message", e);
                 throw new RuntimeException("Exception reading Json notification message", e);
@@ -85,7 +89,6 @@ public class EventHubPublisher implements Publisher {
 
         if (message.getData() != null && message.getData().size() > 0) {
             EventDataBatch batch = this.doCreateBatch();
-            ObjectMapper objectMapper = new ObjectMapper();
 
             Iterator<Map<String, Object>> iter = message.getData().iterator();
             while (iter.hasNext()) {
@@ -93,7 +96,7 @@ public class EventHubPublisher implements Publisher {
                 boolean wasAdded = false;
                 EventData eventData = null;
                 try {
-                    eventData = new EventData(objectMapper.writeValueAsString(singleMessage));
+                    eventData = new EventData(this.objectMapper.writeValueAsString(singleMessage));
                     wasAdded = batch.tryAdd(eventData);
                 } catch (JsonProcessingException e) {
                     logger.error("Exception serializing notification message", e);
@@ -121,5 +124,13 @@ public class EventHubPublisher implements Publisher {
 
     public void setEventHubClient(EventHubProducerClient eventHubClient) {
         this.eventHubClient = eventHubClient;
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

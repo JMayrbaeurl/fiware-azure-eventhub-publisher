@@ -1,5 +1,6 @@
 package com.microsoft.samples.iot.fiware.publisher;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +30,16 @@ public class SubscriptionController {
     @PostMapping("subscriptions/{entityType}")
     public Map<String, Object> subscribeToAllEntitiesOfType(@NonNull @PathVariable String entityType) {
 
-        logger.info("Adding subscription for all entites of type ' " + entityType + "'");
+        boolean isForAll = "@all".equals(entityType.toLowerCase());
 
-        String subID = this.ctxBrokerService.subscribeToEntityWithType(entityType);
+        if (isForAll)
+            logger.info("Adding subscription for all entites");
+        else
+            logger.info("Adding subscription for all entites of type ' " + entityType + "'");
+
+        String subID = isForAll ? this.ctxBrokerService.subscribeToAllChanges()
+            : this.ctxBrokerService.subscribeToEntityWithType(entityType);
+
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("Subscription ID", subID);
 
@@ -39,15 +47,22 @@ public class SubscriptionController {
     }
 
     @PostMapping("subscriptions")
-    public Map<String, Object> createSubscription(@NonNull @RequestBody Subscription subscription) {
+    public List<Map<String, Object>> createSubscriptions(@NonNull @RequestBody List<Subscription> subscriptions) {
 
-        logger.info("Adding subscription with description '" + subscription.getDescription() + "'");
+        if (subscriptions.size() == 1)
+            logger.info("Adding subscription with description '" + subscriptions.get(0).getDescription() + "'");
+        else
+            logger.info("Adding " + subscriptions.size() + " subscriptions");
 
-        String subID = this.ctxBrokerService.createSubscription(subscription);
-        Map<String, Object> result = new HashMap<String, Object>();
-        result.put("Subscription ID", subID);
+        List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+        for(Subscription subscription : subscriptions) {
+            String subID = this.ctxBrokerService.createSubscription(subscription);
+            Map<String, Object> result = new HashMap<String, Object>();
+            result.put("Subscription ID", subID);
+            resultList.add(result);
+        }
 
-        return result;
+        return resultList;
     }
 
     @GetMapping("subscriptions")

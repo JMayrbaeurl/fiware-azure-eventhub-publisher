@@ -24,6 +24,8 @@ public class NotificationController {
     @Autowired
     private Publisher publisher;
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @PostMapping("notification/{entityType}")
     public void publishNotification(@PathVariable String entityType, @RequestBody String jsonString) {
 
@@ -34,8 +36,7 @@ public class NotificationController {
         else {
             NotificationMessage message = null;
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                message = objectMapper.readValue(jsonString, NotificationMessage.class);
+                message = this.objectMapper.readValue(jsonString, NotificationMessage.class);
             } catch (JsonProcessingException ex) {
                 logger.error("Exception reading notification message '" + jsonString + "'", ex);
                 throw new RuntimeException("Exception reading notification message '" + jsonString + "'", ex);
@@ -58,6 +59,14 @@ public class NotificationController {
 
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
     
 }

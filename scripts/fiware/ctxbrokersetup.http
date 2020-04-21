@@ -82,7 +82,7 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:1026/v2/subscriptions/5e9d8b1abb58e5e492e52061 HTTP/1.1
+DELETE http://localhost:1026/v2/subscriptions/5e9ef95bbb58e5e492e5206c HTTP/1.1
 
 ###
 
@@ -99,15 +99,15 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:8081/subscriptions?onlyOwn=true
+GET http://localhost:8080/subscriptions?onlyOwn=true
 
 ###
 
-POST http://localhost:8081/subscriptions/Product
+POST http://localhost:8080/subscriptions/Product
 
 ### 
 
-POST http://localhost:8081/subscriptions
+POST http://localhost:8080/subscriptions
 Content-Type: application/json
 
 {
@@ -120,7 +120,51 @@ Content-Type: application/json
   },
   "notification": {
     "http": {
-      "url": "http://tutorial:3000/subscription/products"
+      "url": "http://host.docker.internal:8080/notification/product"
     }
   }
 }
+
+###
+
+POST http://localhost:8080/subscriptions
+Content-Type: application/json
+
+[
+  {
+    "description": "Notify me of all product price changes",
+    "subject": {
+      "entities": [{"idPattern": ".*", "type": "Product"}],
+      "condition": {
+        "attrs": [ "price" ]
+      }
+    },
+    "notification": {
+      "http": {
+        "url": "http://host.docker.internal:8080/notification/product"
+      }
+    }
+  },
+  {
+    "description": "Notify me of all product name changes",
+    "subject": {
+      "entities": [{"idPattern": ".*", "type": "Product"}],
+      "condition": {
+        "attrs": [ "name" ]
+      }
+    },
+    "notification": {
+      "http": {
+        "url": "http://host.docker.internal:8080/notification/product"
+      }
+    }
+  }
+]
+
+###
+
+POST http://localhost:8080/subscriptions/@All
+
+###
+
+GET http://localhost:8080/subscriptions

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.microsoft.samples.iot.fiware</groupId>
 	<artifactId>fiware-publisher</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<name>fiware-publisher</name>
 	<description>Sample project showing how to connect fiware with Azure Event Hub</description>
 
